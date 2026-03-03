@@ -48,7 +48,7 @@ class CalendlyService {
 
     const { data } =  await this.request.get(url, this.requestConfiguration());
 
-    return data;
+    return data
   };
 
   getUserEventType = async (uuid) => {
@@ -193,6 +193,13 @@ class CalendlyService {
   };
 
   _onCalendlyError = async (error) => {
+    if (this.insufficientScopesError(error)) {
+      this.logScopesError(error);
+      const user = await User.findByAccessToken(this.accessToken);
+      if (user) await User.setClearTokensOnLogout(user.id);
+      return Promise.reject(error);
+    }
+
     if (error.response.status !== 401) return Promise.reject(error);
 
     this.request.interceptors.response.eject(this.requestInterceptor);
@@ -219,6 +226,24 @@ class CalendlyService {
       return Promise.reject(e);
     }
   };
+
+  insufficientScopesError = (error) => {
+    return error.response.status == 403 && error.response.data.title == 'Insufficient scope'
+  }
+
+  buildScopesString = (error) => {
+    return error.response.data.required_scopes.map(scope => `"${scope}"`).join(', ');
+  }
+
+  logScopesError = (error) => {
+    console.error(`
+######
+\tERROR fetching "${error.request.path.split('?')[0]}"
+\tMissing scopes: ${this.buildScopesString(error)}
+\tAdd the missing scopes to your oauth application then logout and back in.
+######`
+    );
+  }
 }
 
 module.exports = CalendlyService;

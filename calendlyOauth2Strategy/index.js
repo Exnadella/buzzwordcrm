@@ -14,7 +14,17 @@ const strategy = new OAuth2Strategy(
   },
   async (accessToken, refreshToken, _profile, cb) => {
     const calendlyService = new CalendlyService(accessToken, refreshToken);
-    const userInfo = await calendlyService.getUserInfo();
+
+    let userInfo;
+
+    try {
+      userInfo = await calendlyService.getUserInfo();
+    } catch (error) {
+      if (error.response.status == 403 && error.response.data.title == 'Insufficient scope') {
+        cb()
+        return
+      }
+    }
 
     try {
       const result = await User.findOrCreate({
