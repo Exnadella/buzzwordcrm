@@ -20,10 +20,12 @@ const strategy = new OAuth2Strategy(
     try {
       userInfo = await calendlyService.getUserInfo();
     } catch (error) {
-      if (error.response.status == 403 && error.response.data.title == 'Insufficient scope') {
-        cb()
-        return
+      if (calendlyService.insufficientScopesError(error)) {
+        cb();
+        return;
       }
+      cb(error);
+      return;
     }
 
     try {

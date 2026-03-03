@@ -228,7 +228,8 @@ class CalendlyService {
   };
 
   insufficientScopesError = (error) => {
-    return error.response.status == 403 && error.response.data.title == 'Insufficient scope'
+    const response = error.response || {}
+    return response.status == 403 && response.data.title == 'Insufficient scope'
   }
 
   buildScopesString = (error) => {
