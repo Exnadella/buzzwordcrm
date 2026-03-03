@@ -5,6 +5,8 @@ const FIND_BY_ID_SQL = `SELECT * FROM users WHERE id = ?`;
 const FIND_BY_ACCESS_TOKEN_SQL = `SELECT * FROM users WHERE access_token = ?`;
 const CREATE_SQL = `INSERT INTO users (calendly_uid, access_token, refresh_token) VALUES (?, ?, ?)`;
 const UPDATE_SQL = `UPDATE users SET access_token = ?, refresh_token = ? WHERE id = ?`;
+const SET_CLEAR_TOKENS_ON_LOGOUT_SQL = `UPDATE users SET clear_tokens_on_logout = 1 WHERE id = ?`;
+const DELETE_SQL = `DELETE FROM users WHERE id = ?`;
 
 class UserModel {
   constructor(connection) {
@@ -68,6 +70,24 @@ class UserModel {
   async create({ calendlyUid, accessToken, refreshToken }) {
     return new Promise((resolve, reject) => {
       db.run(CREATE_SQL, [calendlyUid, accessToken, refreshToken], (err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+  }
+
+  async setClearTokensOnLogout(userId) {
+    return new Promise((resolve, reject) => {
+      db.run(SET_CLEAR_TOKENS_ON_LOGOUT_SQL, [userId], (err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+  }
+
+  async delete(id) {
+    return new Promise((resolve, reject) => {
+      db.run(DELETE_SQL, [id], (err) => {
         if (err) return reject(err);
         resolve();
       });

@@ -14,7 +14,19 @@ const strategy = new OAuth2Strategy(
   },
   async (accessToken, refreshToken, _profile, cb) => {
     const calendlyService = new CalendlyService(accessToken, refreshToken);
-    const userInfo = await calendlyService.getUserInfo();
+
+    let userInfo;
+
+    try {
+      userInfo = await calendlyService.getUserInfo();
+    } catch (error) {
+      if (calendlyService.insufficientScopesError(error)) {
+        cb();
+        return;
+      }
+      cb(error);
+      return;
+    }
 
     try {
       const result = await User.findOrCreate({
